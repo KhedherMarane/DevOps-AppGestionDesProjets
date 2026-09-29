@@ -18,14 +18,16 @@ pipeline {
       }
     }
 
-    stage('Push images') {
+        stage('Push images') {
       steps {
         withCredentials([usernamePassword(credentialsId: 'dockerhub',
                                           usernameVariable: 'DH_USER',
                                           passwordVariable: 'DH_PASS')]) {
-          sh 'echo $DH_PASS | docker login -u $DH_USER --password-stdin'
-          sh 'docker push $DOCKERHUB_USER/gestion-backend:latest'
-          sh 'docker push $DOCKERHUB_USER/gestion-frontend:latest'
+          retry(3) {
+            sh 'echo $DH_PASS | docker login -u $DH_USER --password-stdin'
+            sh 'docker push $DOCKERHUB_USER/gestion-backend:latest'
+            sh 'docker push $DOCKERHUB_USER/gestion-frontend:latest'
+          }
         }
       }
     }
