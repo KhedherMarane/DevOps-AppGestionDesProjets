@@ -1,0 +1,50 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: mysql-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: test_db
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    image: maranekhedher/gestion-backend:latest
+    container_name: backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/test_db?createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8085:8080"
+    networks:
+      - app-network
+
+  frontend:
+    build: ./frontend
+    image: maranekhedher/gestion-frontend:latest
+    container_name: frontend
+    depends_on:
+      - backend
+    ports:
+      - "4200:80"
+    networks:
+      - app-network
+
+volumes:
+  db-data:
+
+networks:
+  app-network:
+    driver: bridge
